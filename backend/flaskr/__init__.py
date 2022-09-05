@@ -15,7 +15,8 @@ def create_app(test_config=None):
     setup_db(app)
 
     """
-    @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
+    @TODO: Set up CORS. Allow '*' for origins. Delete the
+     sample route after completing the TODOs
     """
     cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
@@ -74,7 +75,8 @@ def create_app(test_config=None):
 
     TEST: At this point, when you start the application
     you should see questions and categories generated,
-    ten questions per page and pagination at the bottom of the screen for three pages.
+    ten questions per page and pagination at the bottom of the
+     screen for three pages.
     Clicking on the page numbers should update the questions.
     """
 
@@ -102,13 +104,15 @@ def create_app(test_config=None):
     @TODO:
     Create an endpoint to DELETE question using a question ID.
 
-    TEST: When you click the trash icon next to a question, the question will be removed.
+    TEST: When you click the trash icon next to a question, the question
+     will be removed.
     This removal will persist in the database and when you refresh the page.
     """
 
     @app.route("/questions/<int:question_id>", methods=["DELETE"])
     def question_route(question_id):
-        question = Question.query.filter(Question.id == question_id).one_or_none()
+        question = Question.query.filter(
+            Question.id == question_id).one_or_none()
         if question:
             question.delete()
             return jsonify({"deleted": question_id, "success": True}), 200
@@ -122,27 +126,28 @@ def create_app(test_config=None):
     category, and difficulty score.
 
     TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
+    the form will clear and the question will
+    appear at the end of the last page
     of the questions list in the "List" tab.
     """
 
     @app.route("/questions", methods=["POST"])
     def create_question():
         body = request.get_json()
-        question = body.get("question", None)
-        answer = body.get("answer", None)
-        difficulty = body.get("difficulty", None)
-        category = body.get("category", None)
+        question = body.get("question")
+        answer = body.get("answer")
+        difficulty = body.get("difficulty")
+        category = body.get("category")
         searchTerm = body.get("searchTerm", None)
 
         if searchTerm:
             body = request.get_json()
 
             questions = (
-                Question.query.filter(Question.question.ilike(f"%{searchTerm}%"))
+                Question.query.filter(
+                    Question.question.ilike(f"%{searchTerm}%"))
                 .order_by("id")
-                .all()
-            )
+                .all())
             formatted_questions = [question.format() for question in questions]
 
             return (
@@ -165,7 +170,8 @@ def create_app(test_config=None):
                     category=category,
                 )
                 question_obj.insert()
-                return jsonify({"success": True, "created": question_obj.id}), 201
+                return jsonify(
+                    {"success": True, "created": question_obj.id}), 201
             except Exception as e:
                 abort(422)
 
@@ -238,25 +244,39 @@ def create_app(test_config=None):
         quiz_category = body.get("quiz_category", None)
 
         if quiz_category["id"] != 0:
-            questions = Question.query.filter(Question.category == quiz_category["id"])
+            questions = Question.query.filter(
+                Question.category == int(quiz_category["id"])).all()
         else:
-            questions = Question.query
+            questions = Question.query.all()
 
-        questions = questions.filter(Question.id not in previous_questions).all()
         if len(questions) > 0:
             formatted_questions = [question.format() for question in questions]
-            index = random.randint(0, len(questions) - 1)
-            question = formatted_questions[index]
+            formatted_questions = list(
+                filter(lambda item: item["id"] not in previous_questions,
+                       formatted_questions))
 
-            return (
-                jsonify(
-                    {
-                        "success": True,
-                        "question": question,
-                    }
-                ),
-                200,
-            )
+            if len(formatted_questions) > 0:
+
+                index = random.randint(0, len(formatted_questions) - 1)
+                question = formatted_questions[index]
+
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "question": question,
+                        }
+                    ),
+                    200,
+                )
+            else:
+                return (
+                    jsonify(
+                        {
+                            "success": True
+                        }
+                    ), 200
+                )
         else:
             abort(404)
 
@@ -268,20 +288,20 @@ def create_app(test_config=None):
 
     @app.errorhandler(404)
     def not_found(error):
-        return (
-            jsonify({"success": False, "error": 404, "message": "resource not found"}),
-            404,
-        )
+        return (jsonify({"success": False, "error": 404,
+                         "message": "resource not found"}), 404, )
 
     @app.errorhandler(422)
     def unprocessable(error):
         return (
-            jsonify({"success": False, "error": 422, "message": "unprocessable"}),
+            jsonify({"success": False, "error": 422,
+                    "message": "unprocessable"}),
             422,
         )
 
     @app.errorhandler(400)
     def bad_request(error):
-        return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
+        return jsonify({"success": False, "error": 400,
+                       "message": "bad request"}), 400
 
     return app
